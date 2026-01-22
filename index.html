@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLMTrade 策略看板</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="title">LLMTrade 策略看板</div>
+        <div class="subtitle" id="generatedAt">数据生成时间：-</div>
+      </header>
+
+      <main class="grid">
+        <section class="panel span-2 panel-portfolio">
+          <div class="panel-header">
+            <h2>投资组合概览</h2>
+            <div class="panel-meta">净值与收益率趋势</div>
+          </div>
+          <div class="portfolio-grid">
+            <div class="portfolio-left">
+              <div class="stat-grid">
+                <div class="stat-row"><span>现金</span><span id="portfolioCash" class="mono">-</span></div>
+                <div class="stat-row"><span>持仓数量</span><span id="portfolioPositionsCount" class="mono">-</span></div>
+                <div class="stat-row"><span>持仓成本</span><span id="portfolioInvested" class="mono">-</span></div>
+                <div class="stat-row"><span>仓位占比</span><span id="portfolioExposure" class="mono">-</span></div>
+                <div class="stat-row"><span>最新净值</span><span id="portfolioEquity" class="mono">-</span></div>
+                <div class="stat-row"><span>累计收益率</span><span id="portfolioReturn" class="mono">-</span></div>
+                <div class="stat-row"><span>最近成交</span><span id="portfolioLastTrade" class="mono">-</span></div>
+                <div class="stat-row"><span>账户更新时间</span><span id="portfolioLastUpdate" class="mono">-</span></div>
+              </div>
+              <div class="positions-block">
+                <div class="block-title">持仓明细</div>
+                <div class="positions-list" id="portfolioPositions">暂无持仓</div>
+              </div>
+            </div>
+            <div class="portfolio-right">
+              <div class="chart-title">收益率曲线</div>
+              <canvas id="equityChart" width="900" height="260"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel span-2 panel-signals">
+          <div class="panel-header">
+            <h2>最新信号</h2>
+            <div class="panel-meta" id="signalTime">信号生成时间：-</div>
+          </div>
+          <table class="signal-table" id="signalsTable">
+            <thead>
+              <tr>
+                <th>股票代码</th>
+                <th>股票名称</th>
+                <th>操作方向</th>
+                <th>胜率</th>
+                <th>机会</th>
+                <th>触发时间</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section class="panel span-2 panel-history">
+          <div class="panel-header">
+            <h2>策略历史执行</h2>
+            <div class="panel-meta">按日期记录策略执行结果</div>
+          </div>
+          <table id="historyTable">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>订单数</th>
+                <th>期末净值</th>
+                <th>已实现收益</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section class="panel span-2 panel-summary">
+          <div class="panel-header">
+            <h2>报告摘要</h2>
+            <div class="panel-meta">最新报告一段话概览</div>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-title">研究报告摘要</div>
+              <div class="summary-meta" id="researchSummaryMeta">-</div>
+              <div class="summary-body" id="researchSummary">暂无摘要</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">数据报告摘要</div>
+              <div class="summary-meta" id="dataSummaryMeta">-</div>
+              <div class="summary-body" id="dataSummary">暂无摘要</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel span-2 status-panel panel-status">
+          <div class="panel-header">
+            <h2>运行状态</h2>
+            <div class="panel-meta">策略执行与下单节奏</div>
+          </div>
+          <div class="status-grid">
+            <div class="status-item"><span>当前阶段</span><span id="statusPhase" class="mono">-</span></div>
+            <div class="status-item"><span>状态描述</span><span id="statusMessage" class="mono">-</span></div>
+            <div class="status-item"><span>信号生成</span><span id="statusSignal" class="mono">-</span></div>
+            <div class="status-item"><span>执行时间</span><span id="statusExec" class="mono">-</span></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
