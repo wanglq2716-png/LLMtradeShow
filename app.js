@@ -35,6 +35,13 @@ function formatProbability(value) {
   return `${percent.toFixed(0)}%`;
 }
 
+function formatShares(value) {
+  const num = parseNumber(value);
+  if (num === null) return "-";
+  if (Number.isInteger(num)) return String(num);
+  return num.toFixed(2);
+}
+
 function mapAction(action) {
   const normalized = String(action || "").trim().toLowerCase();
   if (normalized === "buy" || normalized === "买入") return { label: "买入", cls: "tag-buy" };
@@ -50,6 +57,19 @@ function mapOpportunity(value) {
   if (["yes", "true", "1", "是", "有"].includes(normalized)) return "有";
   if (["no", "false", "0", "否", "无"].includes(normalized)) return "无";
   return value || "-";
+}
+
+function getOrderList(record) {
+  if (!record) return [];
+  if (Array.isArray(record.orders_detail)) return record.orders_detail;
+  if (Array.isArray(record.orders)) return record.orders;
+  return [];
+}
+
+function getOrderCount(record, orderList) {
+  if (orderList && orderList.length) return orderList.length;
+  const count = parseNumber(record?.orders);
+  return count === null ? 0 : count;
 }
 
 function drawLineChart(canvas, data) {
@@ -156,24 +176,113 @@ function renderSignals(signals, fallbackTime) {
   });
 }
 
+function renderHistoryDetail(record) {
+  const meta = document.getElementById("historyDetailMeta");
+  const stats = document.getElementById("historyDetailStats");
+  const body = document.getElementById("historyDetailBody");
+  if (!meta || !stats || !body) return;
+
+  if (!record) {
+    meta.textContent = "点击日期行查看详情";
+    stats.textContent = "";
+    body.innerHTML = '<div class="detail-empty">暂无详情</div>';
+    return;
+  }
+
+  const orders = getOrderList(record);
+  const orderCount = getOrderCount(record, orders);
+  const signalTime = record.signal_time || "-";
+  const priceMode = record.price_mode || "-";
+
+  meta.textContent = `执行时间：${record.time || "-"}`;
+  stats.innerHTML = `
+    <span>信号：${signalTime}</span>
+    <span>订单数：${orderCount}</span>
+    <span>价格模式：${priceMode}</span>
+  `;
+
+  if (!orders.length) {
+    const message = orderCount > 0 ? "订单明细缺失，请重新生成 dashboard.json" : "当日无成交订单";
+    body.innerHTML = `<div class="detail-empty">${message}</div>`;
+    return;
+  }
+
+  const rows = orders
+    .map((order) => {
+      const actionInfo = mapAction(order.action);
+      const totalCost = order.costs?.total_cost ?? order.costs?.total ?? 0;
+      return `
+        <tr>
+          <td>${order.symbol || "-"}</td>
+          <td><span class="tag ${actionInfo.cls}">${actionInfo.label}</span></td>
+          <td>${formatShares(order.shares)}</td>
+          <td>${formatNumber(order.price)}</td>
+          <td>${formatNumber(order.gross)}</td>
+          <td>${formatNumber(totalCost)}</td>
+          <td>${formatNumber(order.total)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  body.innerHTML = `
+    <table class="detail-table">
+      <thead>
+        <tr>
+          <th>标的</th>
+          <th>方向</th>
+          <th>股数</th>
+          <th>成交价</th>
+          <th>交易额</th>
+          <th>费用合计</th>
+          <th>净额</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function selectHistoryRecord(history, index) {
+  const rows = document.querySelectorAll("#historyTable tbody tr");
+  rows.forEach((row, idx) => {
+    row.classList.toggle("is-active", idx === index);
+  });
+  renderHistoryDetail(history[index]);
+}
+
 function renderHistory(history) {
   const body = document.querySelector("#historyTable tbody");
   body.innerHTML = "";
   if (!history || !history.length) {
     body.innerHTML = '<tr><td colspan="4" class="empty">暂无执行记录</td></tr>';
+    renderHistoryDetail(null);
     return;
   }
 
-  history.forEach((record) => {
+  history.forEach((record, index) => {
     const row = document.createElement("tr");
+    const orders = getOrderList(record);
+    const orderCount = getOrderCount(record, orders);
+    row.classList.add("history-row");
+    row.tabIndex = 0;
     row.innerHTML = `
       <td>${record.time || "-"}</td>
-      <td>${record.orders ?? "-"}</td>
+      <td>${orderCount}</td>
       <td>${formatNumber(record.ending_equity)}</td>
       <td>${formatNumber(record.realized_pnl)}</td>
     `;
+    row.addEventListener("click", () => selectHistoryRecord(history, index));
+    row.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectHistoryRecord(history, index);
+      }
+    });
     body.appendChild(row);
   });
+
+  selectHistoryRecord(history, history.length - 1);
 }
 
 function renderSummary(summary, metaId, bodyId, label) {
